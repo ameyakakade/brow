@@ -139,10 +139,15 @@ void htmlParser::parse(std::string input){
                 bool check = false;
                 for(char c : data) check = check or (c != ' ') and (c != '\n') and (c != '\t');
                 if(check){
-                    treeNode* textNode = new treeNode("textNode", curr);
-                    textNode->nodeAttributes.push_back({"text", data});
-                    textNode->type = text;
-                    curr->children.push_back(textNode);
+                    if(curr->name == "b" or curr->name == "span" ){
+                        curr->nodeAttributes.push_back({"text", data});
+                        curr->type = text;
+                    }else{
+                        treeNode* textNode = new treeNode("textNode", curr);
+                        textNode->nodeAttributes.push_back({"text", data});
+                        textNode->type = text;
+                        curr->children.push_back(textNode);
+                    }
                 }
                 data.clear();
                 attributes.clear();
@@ -269,7 +274,7 @@ void htmlParser::traverse(treeNode* node, int level){
     for(auto property : node->nodeAttributes){
         std::cout << indent << " Attribute " << property.name << "->" << property.value << std::endl;
     }
-    
+
     for(auto property : node->style){
         std::cout << indent << "    " << property.name << " : " << property.value << std::endl;
     }
