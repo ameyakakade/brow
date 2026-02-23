@@ -94,6 +94,7 @@ void layoutTree::makeLayoutTree(treeNode* node, layoutNode* parentLayout){
 
     // filling the background color 
     currentLayoutNode->color = convertStringToColor(node->style[node->cssPropertyIndexCache["color"]].value);
+    std::cout << node->style[node->cssPropertyIndexCache["color"]].value;
 
     // store the current container node and make it null so that children are forced to make their own container nodes
     layoutNode* temp = currentContainerNode;
@@ -221,6 +222,9 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
     float nodeWidth;
     float nodeHeight = 0;
 
+    node->x = cursorX;
+    node->y = cursorY;
+
     switch(node->type) {
         case nodeType::html: {
             // node width is available width minus left and right margin
@@ -262,6 +266,8 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
                 switch(child->type){
                     case nodeType::text: {
 
+                        node->fontSize = 25;
+
                         std::cout << "Text node detected in container node" << std::endl;
                         std::cout << "TO DO: Refactor the code to create new line containers to a helper function" << std::endl;
 
@@ -271,14 +277,13 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
 
                         std::string tempString;
                         std::string word;
-                        int fontSize = 16;
 
                         for(auto c : child->text + " "){
                             if(c == ' '){
                                 // do the checks and if we hit the max word length make a new line container
                                 word += c;
                                 
-                                float width = MeasureText((tempString+word).c_str(), fontSize);
+                                float width = MeasureText((tempString+word).c_str(), node->fontSize);
                                 if(width >= availableWidth){
                                     if(!checkLastLine){
 
@@ -293,7 +298,8 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
                                         tempchild->originNode = child->originNode;
                                         tempchild->parent = temp;
                                         tempchild->text = tempString;
-                                        tempchild->width = MeasureText(tempString.c_str(), fontSize);
+                                        tempchild->width = MeasureText(tempString.c_str(), node->fontSize);
+                                        tempchild->fontSize = node->fontSize;
 
                                         temp->children.push_back(tempchild);
                                     }
@@ -321,7 +327,8 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
                             tempchild->originNode = child->originNode;
                             tempchild->parent = temp;
                             tempchild->text = tempString;
-                            tempchild->width = MeasureText(tempString.c_str(), fontSize);
+                            tempchild->width = MeasureText(tempString.c_str(), node->fontSize);
+                            tempchild->fontSize = node->fontSize;
 
                             temp->children.push_back(tempchild);
                         }
@@ -331,28 +338,52 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
 
                     }
 
-                    default: std::cout << "Default node detected in container node" << std::endl;
+                    default: /* std::cout << "Default node detected in container node" << std::endl*/ ; 
 
                 }
 
             }
 
             node->children = lineContainers;
+
+            for(auto line : node->children){
+                nodeHeight += calculateLayoutPass(line, availableWidth);
+            }
+
+            node->height = nodeHeight;
+            node->width  = availableWidth;
+
+            cursorY += nodeHeight;
+
             return nodeHeight;
         }
 
         case nodeType::lineContainer: {
-            std::cout << "line node detected" << std::endl;
+            // std::cout << "line node detected" << std::endl;
+            nodeHeight = node->fontSize;
+            node->x = cursorX;
+            node->y = cursorY;
+            for(auto child : node->children){
+                nodeHeight += calculateLayoutPass(child, availableWidth);
+            }
+            cursorY += nodeHeight;
+            node->height = nodeHeight;
             return nodeHeight;
         }
 
         case nodeType::text: {
-            std::cout << "text node detected" << std::endl;
+            // std::cout << "text node detected" << std::endl;
+            nodeHeight = node->fontSize;
+            node->height = nodeHeight;
+
+            node->x = cursorX;
+            node->y = cursorY;
+
             return nodeHeight;
         }
 
         case nodeType::image: {
-            std::cout << "image node detected" << std::endl;
+            // std::cout << "image node detected" << std::endl;
             return nodeHeight;
         }
 

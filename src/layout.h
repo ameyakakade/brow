@@ -26,6 +26,8 @@ class layoutNode{
         float margin[4]  = {0};  // top, bottom, right, left
         float padding[4] = {0};  // top, bottom, right, left
       //float borders[4] = {0};  // top, bottom, right, left
+      
+        float fontSize;
         
         displayType display = displayType::displayBlock;
         nodeType type       = nodeType::html;

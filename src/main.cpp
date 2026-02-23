@@ -7,9 +7,16 @@
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH 700
 
+
 void renderLayoutTree(layoutNode* node){
 
-    DrawRectangle(node->x, node->y, node->width, node->height, node->backgroundColor);
+    switch(node->type){
+        case nodeType::text: {
+            DrawText(node->text.c_str(),  node->x, node->y , node->fontSize, WHITE);
+
+        }
+        default: DrawRectangle(node->x, node->y, node->width, node->height, node->backgroundColor);
+    }
 
     for(auto child : node->children){
         renderLayoutTree(child);
@@ -18,10 +25,9 @@ void renderLayoutTree(layoutNode* node){
 
 int main(){
 
-
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "html viewer");
-    
+
     // converting address to ip and getting html from server
     std::string test = "http://127.0.0.1/index.html";
     urlReader testReader;
@@ -62,7 +68,7 @@ int main(){
     }
     parser.inheritCss(bodyNode);
 
-    parser.traverse(parser.domTree, 0);
+    // parser.traverse(parser.domTree, 0);
 
     /* making the layout tree */
     layoutTree layoutRenderTree;
@@ -87,8 +93,10 @@ int main(){
     {
         int boxPositionY = GetMouseWheelMove();
         BeginDrawing();
+
             ClearBackground(layoutRenderTree.layoutTreeRoot->backgroundColor);
             renderLayoutTree(layoutRenderTree.layoutTreeRoot);
+
         EndDrawing();
     }
 
