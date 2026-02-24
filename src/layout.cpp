@@ -46,7 +46,7 @@ std::unordered_map<std::string, Color> stringToColorMap = {
         {"BROWN",        GetColor(0xA52A2AFF)},
         {"MAROON",       GetColor(0x800000FF)},
 
-        {"TRANSPARENT",  GetColor(0x000000FF)}
+        {"TRANSPARENT",  GetColor(0x00000000)}
 };
 
 // body and root node
@@ -294,12 +294,12 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
 
                                         layoutNode* tempchild = new layoutNode();
                                         tempchild->type = nodeType::text;
-                                        // make sure to copy attributes of the parent text node
                                         tempchild->originNode = child->originNode;
                                         tempchild->parent = temp;
                                         tempchild->text = tempString;
                                         tempchild->width = MeasureText(tempString.c_str(), node->fontSize);
                                         tempchild->fontSize = node->fontSize;
+                                        // make sure to copy attributes of the parent text node
 
                                         temp->children.push_back(tempchild);
                                     }
@@ -394,7 +394,7 @@ Color layoutTree::convertStringToColor(std::string& input){
     std::string temp;
     int state = 0;
     for(char c : input){
-        if(c>65 && c<91) {
+        if(c>64 && c<91) {
             temp += c;
             state = 1;
         }else if(c>96 && c<123){
@@ -408,6 +408,8 @@ Color layoutTree::convertStringToColor(std::string& input){
     Color value = GetColor(0x00000000);
     
     if(stringToColorMap.count(temp) == 1) value = stringToColorMap[temp];
+    else{ std::cout << "not found " << std::endl;}
+    std::cout << temp << std::endl;
 
     return value;
 }

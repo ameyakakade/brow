@@ -4,15 +4,15 @@
 #include "parser.h"
 #include "layout.h"
 
-#define WINDOW_HEIGHT 800
-#define WINDOW_WIDTH 700
+#define WINDOW_HEIGHT 900
+#define WINDOW_WIDTH 600
 
 
 void renderLayoutTree(layoutNode* node){
 
     switch(node->type){
         case nodeType::text: {
-            DrawText(node->text.c_str(),  node->x, node->y , node->fontSize, WHITE);
+            DrawText(node->text.c_str(),  node->x, node->y , node->fontSize, node->color);
 
         }
         default: DrawRectangle(node->x, node->y, node->width, node->height, node->backgroundColor);
@@ -31,7 +31,7 @@ int main(){
 
 
     // converting address to ip and getting html from server
-    std::string test = "http://127.0.0.1/newlinetest.html";
+    std::string test = "http://127.0.0.1/csstest.html";
     urlReader testReader;
     testReader.read(test);
     std::string header, body;
