@@ -135,9 +135,30 @@ void htmlParser::parse(std::string input){
         switch (state){
 
             case readingTagStart: {
+
+                // replacing whitespace characters with spaces
+                std::string temp;
+                bool state = false;
+                for(char c : data){
+                    if(c == '\n' or c == '\t' or c == '\r') state = true;
+                    else{
+                        if(state){
+                            if(c != ' '){
+                                temp += ' ';
+                                temp += c;
+                                state = false;
+                            } 
+                        }else{
+                            temp += c;
+                        }
+                    }
+                } 
+
+                data = temp;
+
                 // init data when we start reading smth
                 bool check = false;
-                for(char c : data) check = check or (c != ' ') and (c != '\n') and (c != '\t');
+                for(char c : data) check = check or (c != ' ');
                 if(check){
                     if(curr->name == "b" or curr->name == "span" ){
                         curr->nodeAttributes.push_back({"text", data});

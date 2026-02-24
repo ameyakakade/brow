@@ -266,7 +266,7 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
                 switch(child->type){
                     case nodeType::text: {
 
-                        node->fontSize = 25;
+                        node->fontSize = 20;
 
                         std::cout << "Text node detected in container node" << std::endl;
                         std::cout << "TO DO: Refactor the code to create new line containers to a helper function" << std::endl;
