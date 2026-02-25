@@ -21,6 +21,29 @@ void renderLayoutTree(layoutNode* node){
     }
 }
 
+void renderLayoutTreeDebug(layoutNode* node){
+
+    switch(node->type){
+        case nodeType::text: {
+            DrawRectangleLines(node->x, node->y , node->width, node->height, PINK);
+            break;
+        }
+        case nodeType::inlineContainer:{
+            DrawRectangleLines(node->x, node->y , node->width, node->height, GREEN);
+            break;
+        }
+        case nodeType::lineContainer:{
+            DrawRectangleLines(node->x, node->y , node->width, node->height, YELLOW);
+            break;
+        }
+        default: DrawRectangleLines(node->x, node->y, node->width, node->height, RED);
+    }
+
+    for(auto child : node->children){
+        renderLayoutTreeDebug(child);
+    }
+}
+
 int main(){
 
     int WINDOW_HEIGHT = 900;
@@ -91,14 +114,24 @@ int main(){
     layoutRenderTree.traverse(layoutRenderTree.layoutTreeRoot, 0);
 
     // rendering 
+    bool debugMode = false;
+    int count = 0;
 
     while (!WindowShouldClose())
     {
         int boxPositionY = GetMouseWheelMove();
+        if (IsKeyDown(KEY_RIGHT)) debugMode = true;
+        if (IsKeyDown(KEY_LEFT)) debugMode = false;
+
         BeginDrawing();
 
+        if(!debugMode){
             ClearBackground(layoutRenderTree.layoutTreeRoot->backgroundColor);
             renderLayoutTree(layoutRenderTree.layoutTreeRoot);
+        }else{
+            ClearBackground(BLACK);
+            renderLayoutTreeDebug(layoutRenderTree.layoutTreeRoot);
+        }
 
         EndDrawing();
     }
