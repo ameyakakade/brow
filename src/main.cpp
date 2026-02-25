@@ -26,17 +26,23 @@ void renderLayoutTreeDebug(layoutNode* node){
     switch(node->type){
         case nodeType::text: {
             DrawRectangleLines(node->x, node->y , node->width, node->height, PINK);
+            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0xfa25f733));
             break;
         }
         case nodeType::inlineContainer:{
             DrawRectangleLines(node->x, node->y , node->width, node->height, GREEN);
+            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0x77d47933));
             break;
         }
         case nodeType::lineContainer:{
             DrawRectangleLines(node->x, node->y , node->width, node->height, YELLOW);
+            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0xFFEA4F33));
             break;
         }
-        default: DrawRectangleLines(node->x, node->y, node->width, node->height, RED);
+        default:{
+            DrawRectangleLines(node->x, node->y, node->width, node->height, RED);
+            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0xff000015));
+        } 
     }
 
     for(auto child : node->children){
@@ -47,7 +53,7 @@ void renderLayoutTreeDebug(layoutNode* node){
 int main(){
 
     int WINDOW_HEIGHT = 900;
-    int WINDOW_WIDTH  = 600;
+    int WINDOW_WIDTH  = 900;
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "html viewer");
@@ -115,7 +121,6 @@ int main(){
 
     // rendering 
     bool debugMode = false;
-    int count = 0;
 
     while (!WindowShouldClose())
     {

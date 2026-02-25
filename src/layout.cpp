@@ -257,27 +257,11 @@ float layoutTree::calculateLayoutPass(layoutNode* node, float availableWidth){
         }
 
         case nodeType::lineContainer: {
-            // std::cout << "line node detected" << std::endl;
-            nodeHeight = node->fontSize;
-            node->x = cursorX;
-            node->y = cursorY;
-            for(auto child : node->children){
-                nodeHeight += calculateLayoutPass(child, availableWidth);
-            }
-            cursorY += nodeHeight;
-            node->height = nodeHeight;
-            return nodeHeight;
+            return calculateLayoutLineContainer(node, availableWidth);
         }
 
         case nodeType::text: {
-            // std::cout << "text node detected" << std::endl;
-            nodeHeight = node->fontSize;
-            node->height = nodeHeight;
-
-            node->x = cursorX;
-            node->y = cursorY;
-
-            return nodeHeight;
+            return calculateLayoutText(node, availableWidth);
         }
 
         case nodeType::image: {
@@ -329,13 +313,16 @@ float layoutTree::calculateLayoutInlineContainer(layoutNode* node, float availab
     float nodeHeight = 0;
     std::vector<layoutNode*> lineContainers;
 
+    node->x = cursorX;
+    node->y = cursorY;
+
     for(auto child : node->children){
 
         switch(child->type){
 
             case nodeType::text: {
-            seperateLineText(node, child, availableWidth, lineContainers);
-            break;
+                seperateLineText(node, child, availableWidth, lineContainers);
+                break;
             }
 
             default: /* std::cout << "Default node detected in container node" << std::endl*/ ; 
@@ -346,6 +333,7 @@ float layoutTree::calculateLayoutInlineContainer(layoutNode* node, float availab
 
     node->children = lineContainers;
 
+    // calculate layout for all the created lines
     for(auto line : node->children){
         nodeHeight += calculateLayoutPass(line, availableWidth);
     }
@@ -359,9 +347,53 @@ float layoutTree::calculateLayoutInlineContainer(layoutNode* node, float availab
 
 }
 
+float layoutTree::calculateLayoutLineContainer(layoutNode* node, float availableWidth){
+    float nodeHeight = 0;
+    float descender = 0;
+    node->x = cursorX;
+    node->y = cursorY;
+
+    // get the largest element of all
+    for(auto child : node->children){
+        float tempAscender = 0;
+        float tempDescender = 0;
+
+        switch(child->type){
+            case nodeType::text:{
+                auto temp = getTextNodeHeight(child);
+                tempAscender  = temp.first;
+                tempDescender = temp.second;
+                break;
+            }
+            default:;
+        }
+
+        if(tempAscender  > nodeHeight) nodeHeight = tempAscender;
+        if(tempDescender > nodeHeight) descender  = tempDescender;
+    }
+    
+    for(auto child : node->children){
+        calculateLayoutPass(child, availableWidth);
+    }
+
+    cursorY += nodeHeight;
+    node->height = nodeHeight;
+    return nodeHeight;
+}
+
+float layoutTree::calculateLayoutText(layoutNode* node, float availableWidth){
+    float nodeHeight;
+    nodeHeight = 20;
+
+    node->x = cursorX;
+    node->y = cursorY;
+
+    return nodeHeight;
+}
+
 void layoutTree::seperateLineText(layoutNode* node, layoutNode* child, float availableWidth, std::vector<layoutNode*>& lineContainers){
 
-    node->fontSize = 20;
+    node->fontSize = 30;
 
     std::cout << "Text node detected in container node" << std::endl;
 
@@ -388,6 +420,7 @@ void layoutTree::seperateLineText(layoutNode* node, layoutNode* child, float ava
         tempchild->fontSize = node->fontSize;
         // make sure to copy attributes of the parent text node
 
+        temp->width = tempchild->width;
         temp->children.push_back(tempchild);
     };
 
@@ -443,4 +476,14 @@ Color layoutTree::convertStringToColor(std::string& input){
     else{ std::cout << "Color not found " << std::endl;}
 
     return value;
+}
+
+std::pair<float, float> layoutTree::getTextNodeHeight(layoutNode* node){
+    float ascender  = 0;
+    float descender = 0;
+    
+    ascender = node->fontSize;
+    node->height = ascender;
+
+    return std::make_pair(ascender, descender);
 }

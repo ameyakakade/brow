@@ -2,6 +2,7 @@
 #include <vector>
 #include "parser.h"
 #include "../raylib/include/raylib.h"
+#include <utility>
 
 enum class displayType{
     displayBlock, displayInline
@@ -67,7 +68,10 @@ class layoutTree{
         // calculate layout pass just switchs to these functions
         float calculateLayoutBlock(layoutNode* node, float availableWidth);
         float calculateLayoutInlineContainer(layoutNode* node, float availableWidth);
+        float calculateLayoutLineContainer(layoutNode* node, float availableWidth);
+        float calculateLayoutText(layoutNode* node, float availableWidth);
 
         // these functions are used to calculate layout inside inline containers
-        void seperateLineText(layoutNode* node, layoutNode* child, float availableWidth, std::vector<layoutNode*>& lineContainers);
+        void  seperateLineText(layoutNode*  node, layoutNode* child, float availableWidth, std::vector<layoutNode*>& lineContainers);
+        std::pair<float, float> getTextNodeHeight(layoutNode* node);
 };
