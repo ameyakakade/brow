@@ -90,7 +90,7 @@ void layoutTree::makeLayoutTree(treeNode* node, layoutNode* parentLayout){
     // lambda function for filling margin and padding data
     auto fillArray = [&](float* array, const std::string& identifier){
         std::vector<std::string> suffix = {"-top", "-bottom", "-right", "-left"};
-        for(int i=0; i<4; i++) array[i] = convertStringToPx(node->style[node->cssPropertyIndexCache[identifier+(suffix[i])]].value);
+        for(int i=0; i<4; i++) array[i] = convertStringToPx(node->style[node->cssPropertyIndexCache[identifier+(suffix[i])]].value)*scale;
     };
 
     // filling margin and padding
@@ -112,6 +112,10 @@ void layoutTree::makeLayoutTree(treeNode* node, layoutNode* parentLayout){
     }else if(node->type == html){
         currentLayoutNode->type = nodeType::html;
     }
+
+    // filling font size
+    currentLayoutNode->fontSize = convertStringToPx(node->style[node->cssPropertyIndexCache["font-size"]].value)*scale;
+    std::cout << "font size of " << node->name << " is " << currentLayoutNode->fontSize;
 
     // filling the background color 
     currentLayoutNode->backgroundColor = convertStringToColor(node->style[node->cssPropertyIndexCache["background-color"]].value);
@@ -162,10 +166,11 @@ void layoutTree::traverse(layoutNode* node, int level){
     else if(node->type == nodeType::inlineContainer){ std::cout << indent << "container node ";}
     else if(node->type == nodeType::lineContainer){ std::cout << indent << "line ";}
     std::cout << (int)node->color.r << (int)node->color.g << (int)node->color.b << (int)node->color.a ;
-    std::cout << " " << " height:" << node->height;
-    std::cout << " " << "  width:" << node->width;
-    std::cout << " " << "      x:" << node->x;
-    std::cout << " " << "      y:" << node->y;
+    std::cout << " font size " << node->fontSize;
+    // std::cout << " " << " height:" << node->height;
+    // std::cout << " " << "  width:" << node->width;
+    // std::cout << " " << "      x:" << node->x;
+    // std::cout << " " << "      y:" << node->y;
     std::cout << " " << node->text;
 
     std::cout << "\n";
@@ -277,29 +282,29 @@ float layoutTree::calculateLayoutBlock(layoutNode* node, float availableWidth){
     float nodeHeight = 0;
 
     // node width is available width minus left and right margin
-    nodeWidth = availableWidth - (node->margin[2] + node->margin[3])*scale;
+    nodeWidth = availableWidth - (node->margin[2] + node->margin[3]);
     
-    node->x = cursorX + node->margin[3]*scale;
-    node->y = cursorY + node->margin[0]*scale;
+    node->x = cursorX + node->margin[3];
+    node->y = cursorY + node->margin[0];
 
-    cursorX = node->x + node->padding[3]*scale;
-    cursorY = node->y + node->padding[0]*scale;
+    cursorX = node->x + node->padding[3];
+    cursorY = node->y + node->padding[0];
 
-    float newAvailableWidth = nodeWidth - (node->padding[2] + node->padding[3])*scale;
+    float newAvailableWidth = nodeWidth - (node->padding[2] + node->padding[3]);
 
     for(auto child : node->children){
         nodeHeight += calculateLayoutPass(child, newAvailableWidth);
     }
 
-    nodeHeight += (node->padding[0] + node->padding[1])*scale;
+    nodeHeight += (node->padding[0] + node->padding[1]);
 
-    cursorX = node->x - node->margin[3]*scale;
-    cursorY = node->y + nodeHeight + node->margin[1]*scale;
+    cursorX = node->x - node->margin[3];
+    cursorY = node->y + nodeHeight + node->margin[1];
 
     node->height = nodeHeight;
     node->width  = nodeWidth;
 
-    return nodeHeight + (node->margin[0] + node->margin[1])*scale;
+    return nodeHeight + (node->margin[0] + node->margin[1]);
 }
 
 float layoutTree::calculateLayoutInlineContainer(layoutNode* node, float availableWidth){
@@ -382,9 +387,9 @@ float layoutTree::calculateLayoutLineContainer(layoutNode* node, float available
 }
 
 float layoutTree::calculateLayoutText(layoutNode* node, float availableWidth){
-    float nodeHeight;
-    nodeHeight = 20;
+    float nodeHeight = 0;
 
+    // get height of the line container and calculate based on it
     node->x = cursorX;
     node->y = cursorY;
 
@@ -393,7 +398,6 @@ float layoutTree::calculateLayoutText(layoutNode* node, float availableWidth){
 
 void layoutTree::seperateLineText(layoutNode* node, layoutNode* child, float availableWidth, std::vector<layoutNode*>& lineContainers){
 
-    node->fontSize = 30;
 
     std::cout << "Text node detected in container node" << std::endl;
 
@@ -416,8 +420,8 @@ void layoutTree::seperateLineText(layoutNode* node, layoutNode* child, float ava
         tempchild->originNode = child->originNode;
         tempchild->parent = temp;
         tempchild->text = tempString;
-        tempchild->width = MeasureText(tempString.c_str(), node->fontSize);
-        tempchild->fontSize = node->fontSize;
+        tempchild->width = MeasureText(tempString.c_str(), child->fontSize);
+        tempchild->fontSize = child->fontSize;
         // make sure to copy attributes of the parent text node
 
         temp->width = tempchild->width;
@@ -429,7 +433,7 @@ void layoutTree::seperateLineText(layoutNode* node, layoutNode* child, float ava
             // do the checks and if we hit the max word length make a new line container
             word += c;
             
-            float width = MeasureText((tempString+word).c_str(), node->fontSize);
+            float width = MeasureText((tempString+word).c_str(), child->fontSize);
             if(width >= availableWidth){
 
                 if(!checkLastLine){

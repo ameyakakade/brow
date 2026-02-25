@@ -55,7 +55,7 @@ class layoutTree{
 
         // constants
         float emToPx = 16;
-        float scale  = 1;
+        float scale  = 3;
 
         float windowHeight;
         float windowWidth;
