@@ -6,48 +6,48 @@
 
 
 
-void renderLayoutTree(layoutNode* node){
+void renderLayoutTree(layoutNode* node, int yOffset){
 
     switch(node->type){
         case nodeType::text: {
-            DrawRectangle(node->x, node->y, node->width, node->height, node->backgroundColor);
-            DrawText(node->text.c_str(),  node->x, node->y , node->fontSize, node->color);
+            DrawRectangle(node->x, node->y+yOffset, node->width, node->height, node->backgroundColor);
+            DrawText(node->text.c_str(),  node->x, node->y+yOffset, node->fontSize, node->color);
             break;
         }
-        default: DrawRectangle(node->x, node->y, node->width, node->height, node->backgroundColor);
+        default: DrawRectangle(node->x, node->y+yOffset, node->width, node->height, node->backgroundColor);
     }
 
     for(auto child : node->children){
-        renderLayoutTree(child);
+        renderLayoutTree(child, yOffset);
     }
 }
 
-void renderLayoutTreeDebug(layoutNode* node){
+void renderLayoutTreeDebug(layoutNode* node, int yOffset){
 
     switch(node->type){
         case nodeType::text: {
-            DrawRectangleLines(node->x, node->y , node->width, node->height, PINK);
-            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0xfa25f733));
+            DrawRectangleLines(node->x, node->y+yOffset , node->width, node->height, PINK);
+            DrawRectangle(node->x, node->y+yOffset , node->width, node->height, GetColor(0xfa25f722));
             break;
         }
         case nodeType::inlineContainer:{
-            DrawRectangleLines(node->x, node->y , node->width, node->height, GREEN);
-            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0x77d47933));
+            DrawRectangleLines(node->x, node->y+yOffset , node->width, node->height, GREEN);
+            DrawRectangle(node->x, node->y+yOffset , node->width, node->height, GetColor(0x77d47933));
             break;
         }
         case nodeType::lineContainer:{
-            DrawRectangleLines(node->x, node->y , node->width, node->height, YELLOW);
-            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0xFFEA4F33));
+            DrawRectangleLines(node->x, node->y+yOffset , node->width, node->height, YELLOW);
+            DrawRectangle(node->x, node->y+yOffset , node->width, node->height, GetColor(0xFFEA4F33));
             break;
         }
         default:{
-            DrawRectangleLines(node->x, node->y, node->width, node->height, RED);
-            DrawRectangle(node->x, node->y , node->width, node->height, GetColor(0xff000015));
+            DrawRectangleLines(node->x, node->y+yOffset, node->width, node->height, RED);
+            DrawRectangle(node->x, node->y+yOffset , node->width, node->height, GetColor(0xff000015));
         } 
     }
 
     for(auto child : node->children){
-        renderLayoutTreeDebug(child);
+        renderLayoutTreeDebug(child, yOffset);
     }
 }
 
@@ -57,8 +57,10 @@ int main(){
     int WINDOW_WIDTH  = 1600;
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "html viewer");
     SetTargetFPS(60);
+
 
 
     // converting address to ip and getting html from server
@@ -118,11 +120,13 @@ int main(){
     // rendering 
     bool debugMode       = false;
     bool layoutTreeDirty = true;
-    float zoomFactor     = 0.02f;
+    float zoomFactor     = 0.01f;
+    float scrollFactor   = 4;
+    float yOffset        = 0.0f;
 
     while (!WindowShouldClose())
     {
-        int boxPositionY = GetMouseWheelMove();
+        yOffset += GetMouseWheelMove()*scrollFactor;
         if (IsKeyDown(KEY_RIGHT)) debugMode = true;
         if (IsKeyDown(KEY_LEFT)) debugMode = false;
         if (IsKeyDown(KEY_UP)){
@@ -132,6 +136,16 @@ int main(){
         if (IsKeyDown(KEY_DOWN)){
             layoutTreeDirty = true;
             layoutRenderTree.scale -= zoomFactor;
+        }
+
+        if(GetScreenWidth() != WINDOW_WIDTH){
+            WINDOW_WIDTH = GetScreenWidth();
+            layoutTreeDirty = true;
+        }
+
+        if(GetScreenHeight() != WINDOW_HEIGHT){
+            WINDOW_HEIGHT = GetScreenHeight();
+            layoutTreeDirty = true;
         }
 
         if(layoutTreeDirty){
@@ -153,10 +167,10 @@ int main(){
 
         if(!debugMode){
             ClearBackground(layoutRenderTree.layoutTreeRoot->children[0]->backgroundColor);
-            renderLayoutTree(layoutRenderTree.layoutTreeRoot);
+            renderLayoutTree(layoutRenderTree.layoutTreeRoot, yOffset);
         }else{
             ClearBackground(BLACK);
-            renderLayoutTreeDebug(layoutRenderTree.layoutTreeRoot);
+            renderLayoutTreeDebug(layoutRenderTree.layoutTreeRoot, yOffset);
         }
 
         EndDrawing();
