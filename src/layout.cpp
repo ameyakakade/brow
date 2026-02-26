@@ -73,12 +73,6 @@ layoutNode* layoutNode::returnClone(){
     return value;
 }
 
-layoutNode::~layoutNode(){
-    for(auto child : children){
-        delete child;
-    }
-}
-
 // body and root node
 void layoutTree::makeLayoutTree(treeNode* node, layoutNode* parentLayout){
 

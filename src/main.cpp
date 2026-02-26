@@ -54,7 +54,7 @@ void renderLayoutTreeDebug(layoutNode* node){
 int main(){
 
     int WINDOW_HEIGHT = 900;
-    int WINDOW_WIDTH  = 1600;
+    int WINDOW_WIDTH  = 900;
 
     SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "html viewer");
@@ -103,56 +103,36 @@ int main(){
 
     parser.traverse(parser.domTree, 0);
 
-    /* making the layout tree object */
+    /* making the layout tree */
     layoutTree layoutRenderTree;
 
-    // make a root node for making layout tree
-    // layoutNode* temp = layoutRenderTree.layoutTreeRoot = new layoutNode;
-    // layoutRenderTree.makeLayoutTree(bodyNode, layoutRenderTree.layoutTreeRoot);
-    // we are not doing this for now ->
-        // discard the root node and make the new root the body node
-        // layoutRenderTree.layoutTreeRoot = layoutRenderTree.layoutTreeRoot->children[0];
-        // delete temp;
+    // make a temporary root node for making layout tree
+    layoutNode* temp = layoutRenderTree.layoutTreeRoot = new layoutNode;
+    layoutRenderTree.makeLayoutTree(bodyNode, layoutRenderTree.layoutTreeRoot);
+    // discard the root node and make the new root the body node
+    layoutRenderTree.layoutTreeRoot = layoutRenderTree.layoutTreeRoot->children[0];
+    delete temp;
 
+    layoutRenderTree.windowWidth = WINDOW_WIDTH;
+    layoutRenderTree.windowHeight = WINDOW_HEIGHT;
+    
+    layoutRenderTree.calculateLayoutPass(layoutRenderTree.layoutTreeRoot, layoutRenderTree.windowWidth);
+
+    layoutRenderTree.traverse(layoutRenderTree.layoutTreeRoot, 0);
 
     // rendering 
-    bool debugMode       = false;
-    bool layoutTreeDirty = true;
-    float zoomFactor     = 0.02f;
+    bool debugMode = false;
 
     while (!WindowShouldClose())
     {
         int boxPositionY = GetMouseWheelMove();
         if (IsKeyDown(KEY_RIGHT)) debugMode = true;
         if (IsKeyDown(KEY_LEFT)) debugMode = false;
-        if (IsKeyDown(KEY_UP)){
-            layoutTreeDirty = true;
-            layoutRenderTree.scale += zoomFactor;
-        }
-        if (IsKeyDown(KEY_DOWN)){
-            layoutTreeDirty = true;
-            layoutRenderTree.scale -= zoomFactor;
-        }
-
-        if(layoutTreeDirty){
-            // remake the layout tree
-            if(layoutRenderTree.layoutTreeRoot) delete layoutRenderTree.layoutTreeRoot;
-            layoutNode* temp = layoutRenderTree.layoutTreeRoot = new layoutNode;
-            layoutRenderTree.makeLayoutTree(bodyNode, layoutRenderTree.layoutTreeRoot);
-            layoutRenderTree.windowWidth = WINDOW_WIDTH;
-            layoutRenderTree.windowHeight = WINDOW_HEIGHT;
-            layoutRenderTree.calculateLayoutPass(layoutRenderTree.layoutTreeRoot, layoutRenderTree.windowWidth);
-            layoutRenderTree.traverse(layoutRenderTree.layoutTreeRoot, 0);
-            layoutRenderTree.cursorX = 0;
-            layoutRenderTree.cursorY = 0;
-            layoutTreeDirty = false;
-            // std::cout << layoutRenderTree.scale << std::endl;
-        }
 
         BeginDrawing();
 
         if(!debugMode){
-            ClearBackground(layoutRenderTree.layoutTreeRoot->children[0]->backgroundColor);
+            ClearBackground(layoutRenderTree.layoutTreeRoot->backgroundColor);
             renderLayoutTree(layoutRenderTree.layoutTreeRoot);
         }else{
             ClearBackground(BLACK);
