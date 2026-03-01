@@ -205,7 +205,7 @@ void htmlParser::parse(std::string input){
                 bool check = false;
                 for(char c : attributes) check = check or (c != ' ') and (c != '\n') and (c != '\t');
 
-                if(data == "br" or data == "hr" or data == "meta" or data == "link"){
+                if(data == "br" or data == "hr" or data == "meta" or data == "link" or data == "!DOCTYPE"){
                     treeNode* temp = new treeNode(data, curr);
                     temp->type = html;
                     curr->children.emplace_back(temp);

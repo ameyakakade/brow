@@ -45,7 +45,7 @@ void renderLayoutTreeDebug(layoutNode* node, int yOffset){
         }
         case nodeType::inlineContainer:{
             DrawRectangleLines(node->x, node->y+yOffset , node->width, node->height, GREEN);
-            DrawRectangle(node->x, node->y+yOffset , node->width, node->height, GetColor(0x77d47988));
+            DrawRectangle(node->x, node->y+yOffset , node->width, node->height, GetColor(0x77d47944));
             break;
         }
         case nodeType::lineContainer:{
@@ -64,6 +64,19 @@ void renderLayoutTreeDebug(layoutNode* node, int yOffset){
     }
 }
 
+layoutNode* hitDetect(layoutNode* node, int x, int y){
+    bool condition = ( x>node->x and x<(node->x+node->width) ) and ( y>node->y and y<(node->y+node->height) );
+    if(condition){
+        for(auto child : node->children){
+            layoutNode* temp = hitDetect(child, x, y);
+            if(temp) return temp;
+        }
+        return node;
+    }else{
+        return nullptr;
+    }
+}
+
 int main(){
 
     WINDOW_HEIGHT = 900;
@@ -77,7 +90,7 @@ int main(){
 
 
     // converting address to ip and getting html from server
-    std::string test = "http://127.0.0.1/test.html";
+    std::string test = "http://127.0.0.1/wow.html";
     urlReader testReader;
     testReader.read(test);
     std::string header, body;
@@ -92,6 +105,10 @@ int main(){
     addDefaults("h2",     "display: block; font-size: 1.5em; font-weight: bold; margin-top: 0.75em; margin-bottom: 0.75em;");
     addDefaults("h3",     "display: block; font-size: 1.17em; font-weight: bold; margin-top: 0.83em; margin-bottom: 0.83em;");
     addDefaults("span",   "display: inline;");
+
+    // enabling the line below somehow crashes the browser
+    // addDefaults("b",      "color: RED;");
+
     addDefaults("strong", "display: inline; font-weight: bold;");
     addDefaults("em",     "display: inline; font-style: italic;");
     addDefaults("a",      "display: inline; color: blue; text-decoration: underline; cursor: pointer;");
@@ -125,6 +142,8 @@ int main(){
     /* making the layout tree object */
     layoutTree layoutRenderTree;
 
+    layoutNode* underMouse = nullptr;
+
     // rendering 
     bool debugMode       = false;
     bool layoutTreeDirty = true;
@@ -137,11 +156,11 @@ int main(){
         yOffset += GetMouseWheelMove()*scrollFactor;
 
         // limit the scroll offset
-        if(yOffset>0) yOffset = 0;
-        if(layoutRenderTree.layoutTreeRoot){
-            if(yOffset< -layoutRenderTree.layoutTreeRoot->children[0]->height+WINDOW_HEIGHT ) yOffset = -layoutRenderTree.layoutTreeRoot->children[0]->height + WINDOW_HEIGHT;
-            if(layoutRenderTree.layoutTreeRoot->children[0]->height < WINDOW_HEIGHT) yOffset = 0;
-        }
+        if(yOffset>ywindow) yOffset = ywindow;
+        // if(layoutRenderTree.layoutTreeRoot){
+        //     if(yOffset< -layoutRenderTree.layoutTreeRoot->children[0]->height+WINDOW_HEIGHT ) yOffset = -layoutRenderTree.layoutTreeRoot->children[0]->height + WINDOW_HEIGHT;
+        //     if(layoutRenderTree.layoutTreeRoot->children[0]->height < WINDOW_HEIGHT) yOffset = ywindow;
+        // }
 
         if (IsKeyDown(KEY_RIGHT)) debugMode = true;
         if (IsKeyDown(KEY_LEFT)) debugMode = false;
@@ -172,12 +191,15 @@ int main(){
             layoutRenderTree.windowWidth = WINDOW_WIDTH;
             layoutRenderTree.windowHeight = WINDOW_HEIGHT;
             layoutRenderTree.calculateLayoutPass(layoutRenderTree.layoutTreeRoot, layoutRenderTree.windowWidth);
-            layoutRenderTree.traverse(layoutRenderTree.layoutTreeRoot, 0);
+            // layoutRenderTree.traverse(layoutRenderTree.layoutTreeRoot, 0);
             layoutRenderTree.cursorX = 0;
             layoutRenderTree.cursorY = 0;
             layoutTreeDirty = false;
             // std::cout << layoutRenderTree.scale << std::endl;
+            underMouse = nullptr;
         }
+
+        underMouse = hitDetect(layoutRenderTree.layoutTreeRoot ,GetMousePosition().x, GetMousePosition().y-yOffset);
 
         BeginDrawing();
 
@@ -192,6 +214,10 @@ int main(){
 
         DrawRectangle(0, 0 , WINDOW_WIDTH, ywindow, GetColor(0xfa25f744));
         DrawRectangle(0, WINDOW_HEIGHT-ywindow , WINDOW_WIDTH, ywindow, GetColor(0xfa25f744));
+
+        if(underMouse != nullptr){
+            DrawRectangle(underMouse->x, underMouse->y+yOffset, underMouse->width, underMouse->height, GetColor(0x888af777));
+        }
 
         EndDrawing();
     }
