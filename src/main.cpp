@@ -77,6 +77,39 @@ layoutNode* hitDetect(layoutNode* node, int x, int y){
     }
 }
 
+int main2(){
+
+    std::string url = "localhost/tt.html";
+
+    curlReader fetcher;
+
+    std::string body;
+    fetcher.fetch(url, body);
+
+    // parsing the html to make a dom tree
+    htmlParser parser;
+
+    // treeNode* htmlNode;
+    // treeNode* bodyNode;
+
+    for(int i=0; i<100000; i++){
+        // fetcher.fetch(url, body);
+        if(parser.domTree) parser.deleteTree(parser.domTree);
+        parser.parse(body); // passing in the html
+        // std::cout << "Parsed html and made tree" << std::endl;
+        // htmlNode = parser.findNodeByName("html", parser.domTree);
+        // parser.parseAttributes(parser.domTree);
+        // std::cout << "Parsed attributes" << std::endl;
+        // bodyNode = parser.findNodeByName("body", parser.domTree);
+        // parser.inheritCss(bodyNode);
+        // std::cout << "Inherited css" << std::endl;
+        parser.traverse(parser.domTree, 0);
+    }
+
+    while(true);
+
+    return 1;
+}
 
 int main(int argc, char **argv){
 
@@ -163,6 +196,9 @@ int main(int argc, char **argv){
     {
         yOffset += GetMouseWheelMove()*scrollFactor;
 
+        if (IsKeyDown(KEY_J)) yOffset -= 10;
+        if (IsKeyDown(KEY_K)) yOffset += 10;
+
         // limit the scroll offset
         if(yOffset>ywindow) yOffset = ywindow;
         // if(layoutRenderTree.layoutTreeRoot){
@@ -172,7 +208,8 @@ int main(int argc, char **argv){
         
         if(IsKeyDown(KEY_R)){
             fetcher.fetch(url, body);
-            if(parser.domTree) delete parser.domTree;
+            delete parser.domTree;
+            std::cout <<"body capacity" <<body.capacity() << std::endl;
             parser.parse(body); // passing in the html
             std::cout << "Parsed html and made tree" << std::endl;
             htmlNode = parser.findNodeByName("html", parser.domTree);
@@ -181,7 +218,7 @@ int main(int argc, char **argv){
             bodyNode = parser.findNodeByName("body", parser.domTree);
             parser.inheritCss(bodyNode);
             std::cout << "Inherited css" << std::endl;
-            parser.traverse(parser.domTree, 0);
+            // parser.traverse(parser.domTree, 0);
             layoutTreeDirty = true;
         }
 
@@ -239,7 +276,7 @@ int main(int argc, char **argv){
         DrawRectangle(0, WINDOW_HEIGHT-ywindow , WINDOW_WIDTH, ywindow, GetColor(0xfa25f744));
 
         if(underMouse != nullptr){
-            DrawRectangle(underMouse->x, underMouse->y+yOffset, underMouse->width, underMouse->height, GetColor(0x888af777));
+            DrawRectangleLines(underMouse->x, underMouse->y+yOffset, underMouse->width, underMouse->height, GetColor(0xff0000ff));
         }
 
         EndDrawing();

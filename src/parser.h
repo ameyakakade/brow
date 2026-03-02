@@ -33,7 +33,6 @@ class treeNode{
         std::vector<cssProperty> style;
         std::unordered_map<std::string, size_t> cssPropertyIndexCache;
         std::vector<attributes> nodeAttributes;
-        ~treeNode();
 };
 
 class htmlParser{
@@ -42,6 +41,7 @@ class htmlParser{
         void parseAttributes(treeNode* node);
         void inheritCss(treeNode* node);
         void traverse(treeNode* node, int level);
+        void deleteTree(treeNode* node);
         treeNode* findNodeByName(std::string name, treeNode* node);
 
         treeNode* domTree = nullptr;
