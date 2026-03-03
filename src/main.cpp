@@ -4,10 +4,14 @@
 #include "parser.h"
 #include "layout.h"
 #include "render.h"
+#include <thread>
 
 int WINDOW_HEIGHT = 900;
 int WINDOW_WIDTH  = 1600;
-int ywindow = 0;
+int ywindow = 100;
+
+std::mutex m;
+std::atomic<bool> reload;
 
 void remakeLayoutTree(layoutTree& lTree, treeNode* body){
     delete lTree.layoutTreeRoot;
@@ -20,23 +24,39 @@ void remakeLayoutTree(layoutTree& lTree, treeNode* body){
     lTree.cursorY = 0;
 }
 
-void downloadAndMakeDomTree(curlReader& fetcher, std::string& url, std::string& body, treeNode*& domTree, treeNode*& htmlNode, treeNode*& bodyNode){
-    fetcher.fetch(url, body);
-    htmlParser parser;
-    delete parser.domTree;
-    parser.parse(body); // passing in the html
-    std::cout << "Parsed html and made tree" << std::endl;
-    htmlNode = parser.findNodeByName("html", parser.domTree);
-    parser.parseAttributes(parser.domTree);
-    std::cout << "Parsed attributes" << std::endl;
-    bodyNode = parser.findNodeByName("body", parser.domTree);
-    parser.inheritCss(bodyNode);
-    std::cout << "Inherited css" << std::endl;
+void downloadAndMakeDomTree(curlReader& fetcher, std::string& url, std::string& body, treeNode*& domTree, treeNode*& htmlNode, treeNode*& bodyNode, std::atomic<bool>& done){
+    while(true){
+        bool check = reload.load();
+        if(check){
+            fetcher.fetch(url, body);
+            htmlParser parser;
+            delete parser.domTree;
+            parser.parse(body); // passing in the html
+            std::cout << "Parsed html and made tree" << std::endl;
+            treeNode* htmlNodeTemp = parser.findNodeByName("html", parser.domTree);
+            parser.parseAttributes(parser.domTree);
+            std::cout << "Parsed attributes" << std::endl;
+            treeNode* bodyNodeTemp = parser.findNodeByName("body", parser.domTree);
+            parser.inheritCss(bodyNodeTemp);
+            std::cout << "Inherited css" << std::endl;
 
-    // switching trees
-    treeNode* temp = domTree;
-    domTree = parser.domTree;
-    delete temp;
+            treeNode* temp;
+            {
+                std::unique_lock<std::mutex> m;
+                // switching trees
+                temp = domTree;
+                domTree = parser.domTree;
+
+                htmlNode = htmlNodeTemp;
+                bodyNode = bodyNodeTemp;
+
+            }
+            // delete temp after unlocking mutex so ui doesnt stop for long
+            delete temp;
+            reload.store(false);
+            done.store(true);
+        }
+    }
 }
 
 void initDefaults();
@@ -61,10 +81,12 @@ int main(int argc, char **argv){
     std::string body;
     fetcher.fetch(url, body);
 
-    // parsing the html to make a dom tree
+    // pointers to important nodes
     treeNode* domTree  = nullptr;
     treeNode* htmlNode = nullptr;
     treeNode* bodyNode = nullptr;
+
+    reload.store(true);
 
     /* making the layout tree object */
     layoutTree layoutRenderTree;
@@ -72,13 +94,15 @@ int main(int argc, char **argv){
     layoutNode* underMouse = nullptr;
 
     // rendering 
-    bool debugMode       = false;
-    bool layoutTreeDirty = true;
-    float zoomFactor     = 0.01f;
-    float scrollFactor   = 4;
-    float yOffset        = 0.0f;
+    bool debugMode                    = false;
+    std::atomic<bool> layoutTreeDirty = true;
+    float zoomFactor                  = 0.01f;
+    float scrollFactor                = 4;
+    float yOffset                     = 0.0f;
+    int reloadb                       = 0;
 
-    downloadAndMakeDomTree(fetcher, url, body, domTree, htmlNode, bodyNode);
+    std::cout << "Starting thread" << std::endl;
+    std::thread t1{downloadAndMakeDomTree, std::ref(fetcher), std::ref(url), std::ref(body), std::ref(domTree), std::ref(htmlNode), std::ref(bodyNode), std::ref(layoutTreeDirty)};
 
     while (!WindowShouldClose())
     {
@@ -95,9 +119,13 @@ int main(int argc, char **argv){
         // }
         
         if(IsKeyDown(KEY_R)){
-            downloadAndMakeDomTree(fetcher, url, body, domTree, htmlNode, bodyNode);
-            // parser.traverse(parser.domTree, 0);
-            layoutTreeDirty = true;
+            reloadb++;
+            if(reloadb>20){
+                reload.store(true);
+                // parser.traverse(parser.domTree, 0);
+                layoutTreeDirty = true;
+                reloadb=0;
+            }
         }
 
         if (IsKeyDown(KEY_RIGHT)) debugMode = true;
@@ -123,21 +151,23 @@ int main(int argc, char **argv){
 
         if(layoutTreeDirty){
             // remake the layout tree
-            remakeLayoutTree(layoutRenderTree, bodyNode);
+            if(bodyNode) remakeLayoutTree(layoutRenderTree, bodyNode);
             layoutTreeDirty = false;
             underMouse = nullptr;
         }
 
-        underMouse = hitDetect(layoutRenderTree.layoutTreeRoot ,GetMousePosition().x, GetMousePosition().y-yOffset);
+        if(layoutRenderTree.layoutTreeRoot) underMouse = hitDetect(layoutRenderTree.layoutTreeRoot ,GetMousePosition().x, GetMousePosition().y-yOffset);
 
         BeginDrawing();
 
-        if(!debugMode){
-            ClearBackground(layoutRenderTree.layoutTreeRoot->children[0]->backgroundColor);
-            renderLayoutTree(layoutRenderTree.layoutTreeRoot, yOffset);
-        }else{
-            ClearBackground(BLACK);
-            renderLayoutTreeDebug(layoutRenderTree.layoutTreeRoot, yOffset);
+        if(layoutRenderTree.layoutTreeRoot){
+            if(!debugMode){
+                ClearBackground(layoutRenderTree.layoutTreeRoot->children[0]->backgroundColor);
+                renderLayoutTree(layoutRenderTree.layoutTreeRoot, yOffset);
+            }else{
+                ClearBackground(BLACK);
+                renderLayoutTreeDebug(layoutRenderTree.layoutTreeRoot, yOffset);
+            }
         }
 
 
