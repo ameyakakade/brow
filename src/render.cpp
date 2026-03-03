@@ -1,4 +1,3 @@
-#include "layout.h"
 #include "render.h"
 
 bool inView(layoutNode* node, int yOffset){

@@ -1,9 +1,9 @@
 #include "layout.h"
 
-int WINDOW_HEIGHT = 900;
-int WINDOW_WIDTH  = 1600;
+extern int WINDOW_HEIGHT;
+extern int WINDOW_WIDTH;
 
-int ywindow = 0;
+extern int ywindow;
 
 bool inView(layoutNode* node, int yOffset);
 void renderLayoutTree(layoutNode* node, int yOffset);

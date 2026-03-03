@@ -5,6 +5,41 @@
 #include "layout.h"
 #include "render.h"
 
+int WINDOW_HEIGHT = 900;
+int WINDOW_WIDTH  = 1600;
+int ywindow = 0;
+
+void remakeLayoutTree(layoutTree& lTree, treeNode* body){
+    delete lTree.layoutTreeRoot;
+    lTree.layoutTreeRoot = new layoutNode;
+    lTree.makeLayoutTree(body, lTree.layoutTreeRoot);
+    lTree.windowWidth = WINDOW_WIDTH;
+    lTree.windowHeight = WINDOW_HEIGHT;
+    lTree.calculateLayoutPass(lTree.layoutTreeRoot, lTree.windowWidth);
+    lTree.cursorX = 0;
+    lTree.cursorY = 0;
+}
+
+void downloadAndMakeDomTree(curlReader& fetcher, std::string& url, std::string& body, treeNode*& domTree, treeNode*& htmlNode, treeNode*& bodyNode){
+    fetcher.fetch(url, body);
+    htmlParser parser;
+    delete parser.domTree;
+    parser.parse(body); // passing in the html
+    std::cout << "Parsed html and made tree" << std::endl;
+    htmlNode = parser.findNodeByName("html", parser.domTree);
+    parser.parseAttributes(parser.domTree);
+    std::cout << "Parsed attributes" << std::endl;
+    bodyNode = parser.findNodeByName("body", parser.domTree);
+    parser.inheritCss(bodyNode);
+    std::cout << "Inherited css" << std::endl;
+
+    // switching trees
+    treeNode* temp = domTree;
+    domTree = parser.domTree;
+    delete temp;
+}
+
+void initDefaults();
 
 int main(int argc, char **argv){
 
@@ -19,31 +54,7 @@ int main(int argc, char **argv){
     std::string url = argv[1];
     std::cout << url << std::endl;
 
-    // converting address to ip and getting html from server
-    // std::string test = "http://127.0.0.1/wow.html";
-    // urlReader testReader;
-    // testReader.read(test);
-    // std::string header, body;
-    // testReader.request(header, body);
-
-    addGlobalDefaults("display: inline; color: black; background-color: transparent; font-size: 16px; font-weight: normal; font-style: normal; text-decoration: none; cursor: auto; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;");
-
-    addDefaults("body",   "display: block; margin-top: 8px; margin-bottom:8px; margin-right: 8px; margin-left: 8px; background-color: WHITE;");
-    addDefaults("p",      "display: block; margin-top: 1em; margin-bottom: 1em;");
-    addDefaults("div",    "display: block;");
-    addDefaults("h1",     "display: block; font-size: 2em; font-weight: bold; margin-top: 0.67em; margin-bottom: 0.67em;");
-    addDefaults("h2",     "display: block; font-size: 1.5em; font-weight: bold; margin-top: 0.75em; margin-bottom: 0.75em;");
-    addDefaults("h3",     "display: block; font-size: 1.17em; font-weight: bold; margin-top: 0.83em; margin-bottom: 0.83em;");
-    addDefaults("span",   "display: inline;");
-
-    // enabling the line below somehow crashes the browser
-    addDefaults("b",      "color: RED;");
-
-    addDefaults("strong", "display: inline; font-weight: bold;");
-    addDefaults("em",     "display: inline; font-style: italic;");
-    addDefaults("a",      "display: inline; color: blue; text-decoration: underline; cursor: pointer;");
-    addDefaults("br",     "display: block;");
-    addDefaults("hr",     "display: block; margin: 10px; padding:0.5px; background-color: GRAY;");
+    initDefaults();
 
     curlReader fetcher;
 
@@ -51,29 +62,9 @@ int main(int argc, char **argv){
     fetcher.fetch(url, body);
 
     // parsing the html to make a dom tree
-    htmlParser parser;
-    if(parser.domTree) delete parser.domTree;
-    parser.parse(body); // passing in the html
-
-    // parser.traverse(parser.domTree, 0);
-    std::cout << "Parsed html and made tree" << std::endl;
-
-    // adding some basic attributes to the html node
-    treeNode* htmlNode = parser.findNodeByName("html", parser.domTree);
-
-    // inherit css properties only for the nodes in body 
-
-    parser.parseAttributes(parser.domTree);
-
-    std::cout << "Parsed attributes" << std::endl;
-
-    treeNode* bodyNode = parser.findNodeByName("body", parser.domTree);
-
-    parser.inheritCss(bodyNode);
-
-    std::cout << "Inherited css" << std::endl;
-
-    parser.traverse(parser.domTree, 0);
+    treeNode* domTree  = nullptr;
+    treeNode* htmlNode = nullptr;
+    treeNode* bodyNode = nullptr;
 
     /* making the layout tree object */
     layoutTree layoutRenderTree;
@@ -86,6 +77,8 @@ int main(int argc, char **argv){
     float zoomFactor     = 0.01f;
     float scrollFactor   = 4;
     float yOffset        = 0.0f;
+
+    downloadAndMakeDomTree(fetcher, url, body, domTree, htmlNode, bodyNode);
 
     while (!WindowShouldClose())
     {
@@ -102,17 +95,7 @@ int main(int argc, char **argv){
         // }
         
         if(IsKeyDown(KEY_R)){
-            fetcher.fetch(url, body);
-            delete parser.domTree;
-            std::cout <<"body capacity" <<body.capacity() << std::endl;
-            parser.parse(body); // passing in the html
-            std::cout << "Parsed html and made tree" << std::endl;
-            htmlNode = parser.findNodeByName("html", parser.domTree);
-            parser.parseAttributes(parser.domTree);
-            std::cout << "Parsed attributes" << std::endl;
-            bodyNode = parser.findNodeByName("body", parser.domTree);
-            parser.inheritCss(bodyNode);
-            std::cout << "Inherited css" << std::endl;
+            downloadAndMakeDomTree(fetcher, url, body, domTree, htmlNode, bodyNode);
             // parser.traverse(parser.domTree, 0);
             layoutTreeDirty = true;
         }
@@ -140,17 +123,8 @@ int main(int argc, char **argv){
 
         if(layoutTreeDirty){
             // remake the layout tree
-            if(layoutRenderTree.layoutTreeRoot) delete layoutRenderTree.layoutTreeRoot;
-            layoutNode* temp = layoutRenderTree.layoutTreeRoot = new layoutNode;
-            layoutRenderTree.makeLayoutTree(bodyNode, layoutRenderTree.layoutTreeRoot);
-            layoutRenderTree.windowWidth = WINDOW_WIDTH;
-            layoutRenderTree.windowHeight = WINDOW_HEIGHT;
-            layoutRenderTree.calculateLayoutPass(layoutRenderTree.layoutTreeRoot, layoutRenderTree.windowWidth);
-            // layoutRenderTree.traverse(layoutRenderTree.layoutTreeRoot, 0);
-            layoutRenderTree.cursorX = 0;
-            layoutRenderTree.cursorY = 0;
+            remakeLayoutTree(layoutRenderTree, bodyNode);
             layoutTreeDirty = false;
-            // std::cout << layoutRenderTree.scale << std::endl;
             underMouse = nullptr;
         }
 
@@ -182,3 +156,23 @@ int main(int argc, char **argv){
     return 0;
 }
 
+void initDefaults(){
+    addGlobalDefaults("display: inline; color: black; background-color: transparent; font-size: 16px; font-weight: normal; font-style: normal; text-decoration: none; cursor: auto; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;");
+
+    addDefaults("body",   "display: block; margin-top: 8px; margin-bottom:8px; margin-right: 8px; margin-left: 8px; background-color: WHITE;");
+    addDefaults("p",      "display: block; margin-top: 1em; margin-bottom: 1em;");
+    addDefaults("div",    "display: block;");
+    addDefaults("h1",     "display: block; font-size: 2em; font-weight: bold; margin-top: 0.67em; margin-bottom: 0.67em;");
+    addDefaults("h2",     "display: block; font-size: 1.5em; font-weight: bold; margin-top: 0.75em; margin-bottom: 0.75em;");
+    addDefaults("h3",     "display: block; font-size: 1.17em; font-weight: bold; margin-top: 0.83em; margin-bottom: 0.83em;");
+    addDefaults("span",   "display: inline;");
+
+    // enabling the line below somehow crashes the browser
+    addDefaults("b",      "color: RED;");
+
+    addDefaults("strong", "display: inline; font-weight: bold;");
+    addDefaults("em",     "display: inline; font-style: italic;");
+    addDefaults("a",      "display: inline; color: blue; text-decoration: underline; cursor: pointer;");
+    addDefaults("br",     "display: block;");
+    addDefaults("hr",     "display: block; margin: 10px; padding:0.5px; background-color: GRAY;");
+}

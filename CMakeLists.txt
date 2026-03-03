@@ -10,7 +10,7 @@ find_package(raylib 3.0 REQUIRED) # Requires at least version 3.0
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/url.cpp src/parser.cpp src/layout.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/url.cpp src/parser.cpp src/layout.cpp src/render.cpp)
 
 target_link_libraries(${PROJECT_NAME} raylib curl)
 
@@ -18,9 +18,11 @@ target_link_libraries(${PROJECT_NAME} raylib curl)
 target_compile_options(${PROJECT_NAME} PRIVATE 
     -g 
     -fno-omit-frame-pointer
+    -fsanitize=address
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE 
+    -fsanitize=address
 )
 
 # Checks if OSX and links appropriate frameworks (only required on MacOS)
