@@ -18,11 +18,11 @@ target_link_libraries(${PROJECT_NAME} raylib curl)
 target_compile_options(${PROJECT_NAME} PRIVATE 
     -g 
     -fno-omit-frame-pointer
-    -fsanitize=address
+    # -fsanitize=address
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE 
-    -fsanitize=address
+    # -fsanitize=address
 )
 
 # Checks if OSX and links appropriate frameworks (only required on MacOS)

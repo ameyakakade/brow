@@ -8,7 +8,7 @@
 
 int WINDOW_HEIGHT = 900;
 int WINDOW_WIDTH  = 1600;
-int ywindow = 100;
+int ywindow = 000;
 
 std::mutex m;
 std::atomic<bool> reload;
@@ -96,10 +96,14 @@ int main(int argc, char **argv){
     // rendering 
     bool debugMode                    = false;
     std::atomic<bool> layoutTreeDirty = true;
-    float zoomFactor                  = 0.01f;
+    float zoomFactor                  = 0.1;
     float scrollFactor                = 4;
     float yOffset                     = 0.0f;
-    int reloadb                       = 0;
+    float ratio                       = 0;
+    bool reloadF                      = false;
+    bool zoomUF                       = false;
+    bool zoomDF                       = false;
+    float bodyHeight                  = 0;
 
     std::cout << "Starting thread" << std::endl;
     std::thread t1{downloadAndMakeDomTree, std::ref(fetcher), std::ref(url), std::ref(body), std::ref(domTree), std::ref(htmlNode), std::ref(bodyNode), std::ref(layoutTreeDirty)};
@@ -110,33 +114,51 @@ int main(int argc, char **argv){
 
         if (IsKeyDown(KEY_J)) yOffset -= 10;
         if (IsKeyDown(KEY_K)) yOffset += 10;
+        if (IsKeyDown(KEY_B)) yOffset = -bodyHeight + WINDOW_HEIGHT;
+        if (IsKeyDown(KEY_T)) yOffset = 0;
+        
+
 
         // limit the scroll offset
         if(yOffset>ywindow) yOffset = ywindow;
-        // if(layoutRenderTree.layoutTreeRoot){
-        //     if(yOffset< -layoutRenderTree.layoutTreeRoot->children[0]->height+WINDOW_HEIGHT ) yOffset = -layoutRenderTree.layoutTreeRoot->children[0]->height + WINDOW_HEIGHT;
-        //     if(layoutRenderTree.layoutTreeRoot->children[0]->height < WINDOW_HEIGHT) yOffset = ywindow;
-        // }
+        if(layoutRenderTree.layoutTreeRoot){
+            if(yOffset < -bodyHeight+WINDOW_HEIGHT ) yOffset = -bodyHeight + WINDOW_HEIGHT;
+            if(bodyHeight < WINDOW_HEIGHT) yOffset = ywindow;
+        }
         
         if(IsKeyDown(KEY_R)){
-            reloadb++;
-            if(reloadb>20){
+            reloadF = true;
+        }else{
+            if(reloadF){
+                reloadF = false;
                 reload.store(true);
-                // parser.traverse(parser.domTree, 0);
                 layoutTreeDirty = true;
-                reloadb=0;
             }
         }
 
-        if (IsKeyDown(KEY_RIGHT)) debugMode = true;
-        if (IsKeyDown(KEY_LEFT)) debugMode = false;
+        if (IsKeyDown(KEY_L)) debugMode = true;
+        if (IsKeyDown(KEY_H)) debugMode = false;
+
         if (IsKeyDown(KEY_UP)){
-            layoutTreeDirty = true;
-            layoutRenderTree.scale += zoomFactor;
+            zoomUF = true;
+        }else{
+            if(zoomUF){
+                zoomUF = false;
+                layoutTreeDirty = true;
+                layoutRenderTree.scale += zoomFactor;
+                ratio = yOffset/bodyHeight;
+            }
         }
+
         if (IsKeyDown(KEY_DOWN)){
-            layoutTreeDirty = true;
-            layoutRenderTree.scale -= zoomFactor;
+            zoomDF = true;
+        }else{
+            if(zoomDF){
+                zoomDF = false;
+                layoutTreeDirty = true;
+                layoutRenderTree.scale -= zoomFactor;
+                ratio = yOffset/bodyHeight;
+            }
         }
 
         if(GetScreenWidth() != WINDOW_WIDTH){
@@ -152,6 +174,10 @@ int main(int argc, char **argv){
         if(layoutTreeDirty){
             // remake the layout tree
             if(bodyNode) remakeLayoutTree(layoutRenderTree, bodyNode);
+            if(layoutRenderTree.layoutTreeRoot){ 
+                bodyHeight = layoutRenderTree.layoutTreeRoot->children[0]->height;
+                yOffset = bodyHeight*ratio;
+            }
             layoutTreeDirty = false;
             underMouse = nullptr;
         }
@@ -175,7 +201,8 @@ int main(int argc, char **argv){
         DrawRectangle(0, WINDOW_HEIGHT-ywindow , WINDOW_WIDTH, ywindow, GetColor(0xfa25f744));
 
         if(underMouse != nullptr){
-            DrawRectangleLines(underMouse->x, underMouse->y+yOffset, underMouse->width, underMouse->height, GetColor(0xff0000ff));
+            DrawRectangleLines(underMouse->x, underMouse->y+yOffset, underMouse->width, underMouse->height, GetColor(0xff4400ff));
+            // DrawRectangle(underMouse->x, underMouse->y+yOffset, underMouse->width, underMouse->height, GetColor(0xff440055));
         }
 
         EndDrawing();
