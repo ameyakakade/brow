@@ -502,6 +502,12 @@ float layoutTree::calculateLayoutLineContainer(layoutNode *node,
             tempDescender = temp.second;
             break;
         }
+        case nodeType::html:
+        {
+            node->width = availableWidth;
+            tempAscender = calculateLayoutPass(child, availableWidth);
+            cursorY -= tempAscender;
+        }
         default:;
         }
 
@@ -515,7 +521,15 @@ float layoutTree::calculateLayoutLineContainer(layoutNode *node,
 
     for (auto child : node->children)
     {
-        calculateLayoutPass(child, availableWidth);
+        switch(child->type)
+        {
+            case nodeType::text:
+            {
+                calculateLayoutPass(child, availableWidth);
+                break;
+            }
+            default:;
+        }
     }
 
     cursorX = oldcursorX;
@@ -573,7 +587,7 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
         tempchild->originNode = child->originNode;
         tempchild->parent = temp;
         tempchild->text = tempString;
-        tempchild->width = MeasureText(tempString.c_str(), child->fontSize);
+        tempchild->width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
         tempchild->fontSize = child->fontSize;
         // make sure to copy attributes of the parent text node
 
@@ -594,7 +608,7 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
         tempchild->originNode = child->originNode;
         tempchild->parent = temp;
         tempchild->text = tempString;
-        tempchild->width = MeasureText(tempString.c_str(), child->fontSize);
+        tempchild->width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
         tempchild->fontSize = child->fontSize;
         // make sure to copy attributes of the parent text node
 
@@ -610,8 +624,7 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
             // container
             word += c;
 
-            float width =
-                MeasureText((tempString + word).c_str(), child->fontSize);
+            float width = MeasureTextEx(calibri, (tempString + word).c_str(), child->fontSize, child->fontSize*0.05).x;
 
             // add to the last line if possible
             if (checkLastLine)
@@ -640,7 +653,7 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
         }
     }
 
-    float width = MeasureText((tempString + word).c_str(), child->fontSize);
+    float width = MeasureTextEx(calibri, (tempString + word).c_str(), child->fontSize, child->fontSize*0.05).x;
 
     // add to the last line if possible
     if (checkLastLine)
@@ -665,7 +678,7 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
 
     if (checkLastLine)
     {
-        float width = MeasureText((tempString).c_str(), child->fontSize);
+        float width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
         float widthRemain = availableWidth - lastLine->width;
         if (width < widthRemain)
         {
@@ -749,13 +762,7 @@ void layoutTree::seperateInlineChildren(
             lineContainers.push_back(temp);
             temp->type = nodeType::lineContainer;
             layoutNode *tempChild = grandChild->returnClone();
-            temp->children.push_back(tempChild);
-            seperateInlineChildren(node, grandChild, availableWidth,
-                                   lineContainers);
-            layoutNode *temp2 = new layoutNode();
-            temp2->parent = node;
-            lineContainers.push_back(temp2);
-            temp2->type = nodeType::lineContainer;
+            makeLayoutTree(grandChild->originNode, temp);
         }
     }
 }

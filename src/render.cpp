@@ -1,4 +1,7 @@
 #include "render.h"
+#include <iostream>
+
+extern Font calibri;
 
 bool inView(layoutNode *node, int yOffset)
 {
@@ -21,8 +24,10 @@ void renderLayoutTree(layoutNode *node, int yOffset)
     {
         DrawRectangle(node->x, node->y + yOffset, node->width, node->height,
                       node->backgroundColor);
-        DrawText(node->text.c_str(), node->x, node->y + yOffset, node->fontSize,
-                 node->color);
+        // DrawText(node->text.c_str(), node->x, node->y + yOffset, node->fontSize,
+        //          node->color);
+        DrawTextEx(calibri, node->text.c_str(), {node->x, node->y + yOffset}, node->fontSize, node->fontSize*0.05, node->color); // Draw text using font and additional parameters
+
         break;
     }
     default:
@@ -57,7 +62,7 @@ void renderLayoutTreeDebug(layoutNode *node, int yOffset)
         DrawRectangleLines(node->x, node->y + yOffset, node->width,
                            node->height, GREEN);
         DrawRectangle(node->x, node->y + yOffset, node->width, node->height,
-                      GetColor(0x77d47944));
+                      GetColor(0x77d47922));
         break;
     }
     case nodeType::lineContainer:
@@ -65,7 +70,7 @@ void renderLayoutTreeDebug(layoutNode *node, int yOffset)
         DrawRectangleLines(node->x, node->y + yOffset, node->width,
                            node->height, YELLOW);
         DrawRectangle(node->x, node->y + yOffset, node->width, node->height,
-                      GetColor(0xFFEA4F33));
+                      GetColor(0xFFEA4F22));
         break;
     }
     default:
@@ -103,18 +108,27 @@ layoutNode *hitDetect(layoutNode *node, int x, int y)
     }
 }
 
-void findUrl(std::string &url, treeNode *hit)
+bool findUrl(std::string& url, treeNode* hit)
 {
     while (hit->parentNode)
     {
-        for(auto attribute : hit->nodeAttributes)
+        for (auto attribute : hit->nodeAttributes)
         {
             if (attribute.name == "href")
             {
-                url = attribute.value;
-                return;
+                if(attribute.value[0] == '/')
+                {
+                    url += attribute.value;
+                }
+                else 
+                {
+                    url = attribute.value;
+                }
+                std::cout << url << std::endl;
+                return true;
             }
         }
         hit = hit->parentNode;
     }
+    return false;
 }

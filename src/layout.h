@@ -20,6 +20,8 @@ enum class nodeType
     lineContainer
 };
 
+extern Font calibri;
+
 class layoutNode
 {
   public:
@@ -66,7 +68,7 @@ class layoutTree
 
     // constants
     float emToPx = 16;
-    float scale = 1.5;
+    float scale = 1.3;
 
     float windowHeight;
     float windowWidth;

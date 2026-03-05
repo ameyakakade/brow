@@ -19,7 +19,7 @@ class curlReader
   public:
     curlReader();
     ~curlReader();
-    void fetch(std::string url, std::string &data);
+    bool fetch(std::string url, std::string &data);
 
   private:
     CURL *curl;

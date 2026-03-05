@@ -13,6 +13,8 @@ int ywindow = 000;
 std::mutex m;
 std::atomic<bool> reload;
 
+Font calibri;
+
 void remakeLayoutTree(layoutTree &lTree, treeNode *body)
 {
     delete lTree.layoutTreeRoot;
@@ -37,7 +39,12 @@ void downloadAndMakeDomTree(curlReader &fetcher, std::string &url,
         bool check = reload.load();
         if (check)
         {
-            fetcher.fetch(url, body);
+            if (!fetcher.fetch(url, body))
+            {
+                reload.store(false);
+                done.store(true);
+                return;
+            }
             htmlParser parser;
             delete parser.domTree;
             parser.parse(body); // passing in the html
@@ -53,6 +60,12 @@ void downloadAndMakeDomTree(curlReader &fetcher, std::string &url,
             parser.traverse(parser.domTree, 0);
 
             treeNode *temp;
+            if (!htmlNodeTemp or !bodyNodeTemp)
+            {
+                reload.store(false);
+                done.store(true);
+                return;
+            }
             {
                 std::unique_lock<std::mutex> m;
                 // switching trees
@@ -83,9 +96,10 @@ int main(int argc, char **argv)
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "html viewer");
     SetTargetFPS(60);
 
+    calibri = LoadFontEx("resources/calibri.ttf", 300, 0, 250);
+
     std::string url = argv[1];
     std::cout << url << std::endl;
-
     initDefaults();
 
     curlReader fetcher;
@@ -130,27 +144,20 @@ int main(int argc, char **argv)
         if (IsKeyDown(KEY_K))
             yOffset += 10;
 
-        // if (IsKeyDown(KEY_N)){ counters[3] += 1; if(counters[3] > 15)
-        // {yOffset -= WINDOW_HEIGHT; counters[3] = 0;} }else{ if(counters[3] >
-        // 0) yOffset -= WINDOW_HEIGHT; counters[3] = 0; } if
-        // (IsKeyDown(KEY_P)){ counters[4] += 1; if(counters[4] > 15) {yOffset
-        // += WINDOW_HEIGHT; counters[4] = 0;} }else{ if(counters[4] > 0)
-        // yOffset += WINDOW_HEIGHT; counters[4] = 0; }
-
         if (IsKeyDown(KEY_B))
             yOffset = -bodyHeight + WINDOW_HEIGHT;
         if (IsKeyDown(KEY_T))
             yOffset = 0;
 
-        ratio = yOffset / bodyHeight;
+        ratio = yOffset / (bodyHeight - WINDOW_HEIGHT);
 
         // limit the scroll offset
         if (yOffset > ywindow)
             yOffset = ywindow;
         if (layoutRenderTree.layoutTreeRoot)
         {
-            // if (yOffset < -bodyHeight + WINDOW_HEIGHT)
-            //     yOffset = -bodyHeight + WINDOW_HEIGHT;
+            if (yOffset < -bodyHeight + WINDOW_HEIGHT * 0.9)
+                yOffset = -bodyHeight + WINDOW_HEIGHT * 0.9;
             if (bodyHeight < WINDOW_HEIGHT)
                 yOffset = ywindow;
         }
@@ -239,7 +246,6 @@ int main(int argc, char **argv)
             {
                 bodyHeight =
                     layoutRenderTree.layoutTreeRoot->children[0]->height;
-                yOffset = bodyHeight * ratio;
             }
             layoutTreeDirty = false;
             underMouse = nullptr;
@@ -256,9 +262,12 @@ int main(int argc, char **argv)
             {
                 if (underMouse->originNode)
                 {
-                    findUrl(url, underMouse->originNode);
-                    reload.store(true);
-                    layoutTreeDirty = true;
+                    std::string temp = url;
+                    if (findUrl(url, underMouse->originNode))
+                    {
+                        reload.store(true);
+                        layoutTreeDirty = true;
+                    }
                 }
             }
         }

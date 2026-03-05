@@ -35,7 +35,7 @@ curlReader::~curlReader()
         std::cout << "ERROR: Curl easy handle does not exist" << std::endl;
 }
 
-void curlReader::fetch(std::string url, std::string &data)
+bool curlReader::fetch(std::string url, std::string &data)
 {
     data.clear();
     if (curl)
@@ -48,7 +48,10 @@ void curlReader::fetch(std::string url, std::string &data)
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
         result = curl_easy_perform(curl);
+        if(result == CURLE_OK) return true;
+        else return false;
     }
+    return false;
 }
 
 urlReader::urlReader() {}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head></head>
+    <body style="background-color:white;">
+        <h1>Brows</h1>
+        <hr>
+        <div>
+            <p>This page is a demo for <a>this</a> "browser" made by <a>me.</a>
+            <p>It uses curl to download web pages and raylib to render content.</p>
+            <hr>
+            <h2 style="color:red;">Controls</h2>
+            <p>You have probably figured out you can scroll pages using your mouse. The 'j' and 'k' keys also scroll down and up.<br>The 'l' key enters a "debug mode" and shows how the browser calculates position of all the elements. Press 'h' to exit that mode.<br>Up and down arrows zoom in and out, 't' and 'b' keys scroll to the top and bottom. The 'r' key reloads the page.</p>
+            <hr>
+
+            <h2>Why does this even exist?</h2>
+            <p>Almost everything that is done on a computer can be done in a web browser. This simple implementation has about 1% functionality of a modern web browser, it lacks JavaScript support, proper CSS support and ignores 99% of the w3 spec. Regardless, this project helped me get a basic understanding of how modern browsers work, and the insanely forgiving nature of HTML and CSS. There is not much practical use this browser has, except seeing how sites break in amusing ways or trying to write websites that render properly within these constraints.</p>
+            <p style="color: olive; font-size:1.2em;">Given below are some sites that(somewhat) work properly on this browser.</p>
+            <p><a href="https://motherfuckingwebsite.com">mfingwebsite</a>
+            <p>(feel free to add more in the repo!)</p>
+            <hr>
+            <h2>Feature Demonstrations</h2>
+            Below is a showcase of this browser's capabilites.
+            <hr>
+            <div style="padding:10px; background-color:pink;">
+            Block elements are mostly rendered properly,
+            <div style="padding:10px; background-color:black; margin: 10px;">
+            <div style="padding:10px; background-color:yellow;">
+                like this element is inside a div inside a div inside a div.
+            </div>
+            </div>
+            </div>
+
+            <p>You can have different text sizes for inline elements,<span style="font-size:1.2em;"> like this span is 20% bigger than the text before it,</span><span style="font-size:1.68em;"> and this is 40% bigger than that.</span>
+
+            <p>Inline elements can be nested, but the browser just collapses them into a single list.<div style="display:inline; background-color: red; color:white;"> This div is inline and<span style="background-color:green;"> and this is another inline element inside that</span> this text is inside the div but outside the span.
+
+        </div>
+
+
+
+    </body>
+</html>
+    
