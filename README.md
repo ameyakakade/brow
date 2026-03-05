@@ -44,5 +44,5 @@ A basic HTML viewer made using C++, raylib and curl.
 - The binary will be in the build folder.
 
 ## What do i use this for?
-This browser has almost no practical use, besides trying to write websites that render properly on this browser or seeing how modern sites break in amusing ways.
+This browser has almost no practical use, besides trying to write websites that render properly on this browser(with its numerous limitations) or seeing how modern sites break in amusing ways.
 Reading the source code might help understanding how the DOM Tree is made, how CSS inheritance works and how the layout is calculated.
