@@ -30,6 +30,7 @@ A basic HTML viewer made using C++, raylib and curl.
   python -m http.server 4040
   ./brow "localhost:4040/demos/index.html"
   ```
+- Make sure that the resources is folder is located in the working directory of the program.
 - Try opening the index.html file in `demos`. If you end up writing any websites for this make sure to add it to the demos folder and make a pull request!
 
 ## Building
