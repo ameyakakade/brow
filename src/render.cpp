@@ -24,9 +24,9 @@ void renderLayoutTree(layoutNode *node, int yOffset)
     {
         DrawRectangle(node->x, node->y + yOffset, node->width, node->height,
                       node->backgroundColor);
-        // DrawText(node->text.c_str(), node->x, node->y + yOffset, node->fontSize,
-        //          node->color);
-        DrawTextEx(calibri, node->text.c_str(), {node->x, node->y + yOffset}, node->fontSize, node->fontSize*0.05, node->color); // Draw text using font and additional parameters
+        DrawText(node->text.c_str(), node->x, node->y + yOffset, node->fontSize,
+                  node->color);
+        //DrawTextEx(calibri, node->text.c_str(), {node->x, node->y + yOffset}, node->fontSize, node->fontSize*0.05, node->color); // Draw text using font and additional parameters
 
         break;
     }

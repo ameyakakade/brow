@@ -141,8 +141,6 @@ void layoutTree::makeLayoutTree(treeNode *node, layoutNode *parentLayout)
         convertStringToPx(
             node->style[node->cssPropertyIndexCache["font-size"]].value) *
         scale;
-    std::cout << "font size of " << node->name << " is "
-              << currentLayoutNode->fontSize;
 
     // filling the background color
     currentLayoutNode->backgroundColor = convertStringToColor(
@@ -151,7 +149,6 @@ void layoutTree::makeLayoutTree(treeNode *node, layoutNode *parentLayout)
     // filling the background color
     currentLayoutNode->color = convertStringToColor(
         node->style[node->cssPropertyIndexCache["color"]].value);
-    std::cout << "filling the color of" << node->name << std::endl;
 
     // store the current container node and make it null so that children are
     // forced to make their own container nodes
@@ -287,7 +284,7 @@ float layoutTree::convertStringToPx(std::string &input)
     }
     catch (std::invalid_argument)
     {
-        std::cout << "Invalid CSS in \"" << input << "\"" << std::endl;
+        // std::cout << "Invalid CSS in \"" << input << "\"" << std::endl;
         value = 16;
     }
 
@@ -562,7 +559,7 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
                                   std::vector<layoutNode *> &lineContainers)
 {
 
-    std::cout << "Text node detected in container node" << std::endl;
+    // std::cout << "Text node detected in container node" << std::endl;
 
     // use this to check if somethings can be fit in the previous line
     // after checking it set the bool to false and never check again for this
@@ -587,7 +584,8 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
         tempchild->originNode = child->originNode;
         tempchild->parent = temp;
         tempchild->text = tempString;
-        tempchild->width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
+        tempchild->width = MeasureText(tempString.c_str(), child->fontSize);
+        // tempchild->width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
         tempchild->fontSize = child->fontSize;
         // make sure to copy attributes of the parent text node
 
@@ -608,7 +606,8 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
         tempchild->originNode = child->originNode;
         tempchild->parent = temp;
         tempchild->text = tempString;
-        tempchild->width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
+        tempchild->width = MeasureText(tempString.c_str(), child->fontSize);
+        // tempchild->width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
         tempchild->fontSize = child->fontSize;
         // make sure to copy attributes of the parent text node
 
@@ -624,7 +623,8 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
             // container
             word += c;
 
-            float width = MeasureTextEx(calibri, (tempString + word).c_str(), child->fontSize, child->fontSize*0.05).x;
+            float width = MeasureText((tempString + word).c_str(), child->fontSize);
+            // float width = MeasureTextEx(calibri, (tempString + word).c_str(), child->fontSize, child->fontSize*0.05).x;
 
             // add to the last line if possible
             if (checkLastLine)
@@ -653,7 +653,8 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
         }
     }
 
-    float width = MeasureTextEx(calibri, (tempString + word).c_str(), child->fontSize, child->fontSize*0.05).x;
+    float width = MeasureText((tempString + word).c_str(), child->fontSize);
+    // float width = MeasureTextEx(calibri, (tempString + word).c_str(), child->fontSize, child->fontSize*0.05).x;
 
     // add to the last line if possible
     if (checkLastLine)
@@ -678,7 +679,8 @@ void layoutTree::seperateLineText(layoutNode *node, layoutNode *child,
 
     if (checkLastLine)
     {
-        float width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
+        float width = MeasureText(tempString.c_str(), child->fontSize);
+        // float width = MeasureTextEx(calibri, tempString.c_str(), child->fontSize, child->fontSize*0.05).x;
         float widthRemain = availableWidth - lastLine->width;
         if (width < widthRemain)
         {

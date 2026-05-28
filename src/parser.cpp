@@ -230,7 +230,7 @@ void htmlParser::parse(std::string& input){
 
                         // if we reach the root node
                         if(!temp->parentNode){
-                            std::cout << data << " tag was never opened." << std::endl;
+                            // std::cout << data << " tag was never opened." << std::endl;
                             break;
                         }
                         if(temp->name == data){

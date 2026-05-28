@@ -24,9 +24,9 @@ void remakeLayoutTree(layoutTree &lTree, treeNode *body)
     lTree.windowHeight = WINDOW_HEIGHT;
     lTree.cursorX = 0;
     lTree.cursorY = 0;
-    lTree.traverse(lTree.layoutTreeRoot, 0);
+    // lTree.traverse(lTree.layoutTreeRoot, 0);
     lTree.calculateLayoutPass(lTree.layoutTreeRoot, lTree.windowWidth);
-    lTree.traverse(lTree.layoutTreeRoot, 0);
+    // lTree.traverse(lTree.layoutTreeRoot, 0);
 }
 
 void downloadAndMakeDomTree(curlReader &fetcher, std::string &url,
@@ -48,16 +48,13 @@ void downloadAndMakeDomTree(curlReader &fetcher, std::string &url,
             htmlParser parser;
             delete parser.domTree;
             parser.parse(body); // passing in the html
-            std::cout << "Parsed html and made tree" << std::endl;
             treeNode *htmlNodeTemp =
                 parser.findNodeByName("html", parser.domTree);
             parser.parseAttributes(parser.domTree);
-            std::cout << "Parsed attributes" << std::endl;
             treeNode *bodyNodeTemp =
                 parser.findNodeByName("body", parser.domTree);
             parser.inheritCss(bodyNodeTemp);
-            std::cout << "Inherited css" << std::endl;
-            parser.traverse(parser.domTree, 0);
+            // parser.traverse(parser.domTree, 0);
 
             treeNode *temp;
             if (!htmlNodeTemp or !bodyNodeTemp)
@@ -122,14 +119,13 @@ int main(int argc, char **argv)
     // rendering
     bool debugMode = false;
     std::atomic<bool> layoutTreeDirty = true;
-    float zoomFactor = 0.1;
+    float zoomFactor = 0.01;
     float scrollFactor = 4;
     float yOffset = 0.0f;
     float ratio = 0;
     float counters[5] = {0};
     float bodyHeight = INT_MAX;
 
-    std::cout << "Starting thread" << std::endl;
     std::thread t1{downloadAndMakeDomTree, std::ref(fetcher),
                    std::ref(url),          std::ref(body),
                    std::ref(domTree),      std::ref(htmlNode),
@@ -183,46 +179,16 @@ int main(int argc, char **argv)
 
         if (IsKeyDown(KEY_UP))
         {
-            counters[1] += 1;
-            if (counters[1] > 20)
-            {
-                counters[1] = 0;
-                layoutTreeDirty = true;
-                layoutRenderTree.scale += zoomFactor;
-                ratio = yOffset / bodyHeight;
-            }
-        }
-        else
-        {
-            if (counters[1] > 0)
-            {
-                counters[1] = 0;
-                layoutTreeDirty = true;
-                layoutRenderTree.scale += zoomFactor;
-                ratio = yOffset / bodyHeight;
-            }
+            layoutTreeDirty = true;
+            layoutRenderTree.scale += zoomFactor;
+            ratio = yOffset / bodyHeight;
         }
 
         if (IsKeyDown(KEY_DOWN))
         {
-            counters[2] += 1;
-            if (counters[2] > 20)
-            {
-                counters[2] = 0;
-                layoutTreeDirty = true;
-                layoutRenderTree.scale -= zoomFactor;
-                ratio = yOffset / bodyHeight;
-            }
-        }
-        else
-        {
-            if (counters[2] > 0)
-            {
-                counters[2] = 0;
-                layoutTreeDirty = true;
-                layoutRenderTree.scale -= zoomFactor;
-                ratio = yOffset / bodyHeight;
-            }
+            layoutTreeDirty = true;
+            layoutRenderTree.scale -= zoomFactor;
+            ratio = yOffset / bodyHeight;
         }
 
         if (GetScreenWidth() != WINDOW_WIDTH)
